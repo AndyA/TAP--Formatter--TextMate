@@ -23,7 +23,7 @@ Create a TextMate command that looks something like this:
     test=''
     opts='-rb'
     if [ ${TM_FILEPATH:(-2)} == '.t' ] ; then
-        test=$TM_FILEPATH
+        test=`echo $TM_FILEPATH | perl -pe "s{^$TM_PROJECT_DIRECTORY/+}{}"`
         opts='-b'
     fi
     cd $TM_PROJECT_DIRECTORY && prove --merge --formatter TAP::Formatter::TextMate $opts $test
