@@ -10,3 +10,4 @@ t/basic.t
 t/pod-coverage.t
 t/pod.t
 TAP-Formatter-TextMate.tmproj
+META.yml
