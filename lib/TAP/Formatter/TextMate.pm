@@ -5,7 +5,7 @@ use strict;
 use Carp;
 use TAP::Formatter::TextMate::Session;
 
-our $VERSION = '0.1';
+our $VERSION = '0.2';
 use base 'TAP::Formatter::Console';
 
 =head1 NAME
@@ -14,7 +14,7 @@ TAP::Formatter::TextMate - Generate TextMate compatible test output
 
 =head1 VERSION
 
-This document describes TAP::Formatter::TextMate version 0.1
+This document describes TAP::Formatter::TextMate version 0.2
 
 =head1 SYNOPSIS
 

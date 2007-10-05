@@ -5,7 +5,7 @@ use TAP::Base;
 use HTML::Tiny;
 use URI::file;
 
-our $VERSION = '0.1';
+our $VERSION = '0.2';
 use base 'TAP::Formatter::Console::Session';
 
 =head1 NAME
@@ -14,11 +14,11 @@ TAP::Formatter::TextMate::Session - Harness output delegate for TextMate output
 
 =head1 VERSION
 
-Version 0.1
+Version 0.2
 
 =cut
 
-$VERSION = '0.1';
+$VERSION = '0.2';
 
 =head1 DESCRIPTION
 
