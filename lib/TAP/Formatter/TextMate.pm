@@ -45,9 +45,11 @@ sub prepare {
 
     my $html = $self->_html;
 
-    print $html->open( 'html' ),
-      $html->head( [ \'style', $self->_stylesheet ] ), $html->open( 'body' ),
-      "\n";
+    $self->_raw_output(
+        $html->open( 'html' ),
+        $html->head( [ \'style', $self->_stylesheet ] ),
+        $html->open( 'body' ), "\n"
+    );
 
     $self->SUPER::prepare( @tests );
 }
@@ -87,7 +89,7 @@ sub summary {
     my ( $self, $aggregate ) = @_;
     my $html = $self->_html;
     $self->SUPER::summary( $aggregate );
-    print $html->close( 'body' ), $html->close( 'html' ), "\n";
+    $self->_raw_output( $html->close( 'body' ), $html->close( 'html' ), "\n" );
 }
 
 sub _html {
@@ -139,7 +141,12 @@ sub _output {
         push @style, 'background-color: ' . $bg if $bg;
         $out = $html->span( { style => join( ';', @style ) }, $out );
     }
-    print $out;
+    $self->_raw_output( $out );
+}
+
+sub _raw_output {
+    my $self = shift;
+    print join '', @_;
 }
 
 sub _stylesheet {

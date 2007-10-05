@@ -30,30 +30,15 @@ This provides output formatting for TAP::Harness.
 
 =head1 METHODS
 
-=head2 Class Methods
-
-=head3 C<new>
-
-=cut
-
-sub new {
-    my $class = shift;
-    my $self  = $class->SUPER::new( @_ );
-    $self->{queue} = [];
-    return $self;
-}
-
-=head3 C<result>
+=head2 C<result>
 
 Called by the harness for each line of TAP it receives.
 
 =cut
 
 sub _flush_item {
-    my $self      = shift;
-    my $queue     = $self->{queue};
-    my $html      = $self->_html;
-    my $formatter = $self->formatter;
+    my $self  = shift;
+    my $queue = $self->{queue};
 
     # Get the result...
     my $result = shift @$queue;
@@ -61,6 +46,8 @@ sub _flush_item {
     $self->SUPER::result( $result );
 
     if ( $result->is_test && !$result->is_ok ) {
+        my $html      = $self->_html;
+        my $formatter = $self->formatter;
 
         my %def = ( file => $self->name, );
 
@@ -79,10 +66,14 @@ sub _flush_item {
 
         # See: http://macromates.com/blog/2005/html-output-for-commands/
         my $link = 'txmt://open?' . $html->query_encode( \%def );
-
-        print $html->span( { class => 'fail' },
-            [ $result->raw, ' (', [ \'a', { href => $link }, 'go' ], ')' ] ),
-          $html->br, "\n";
+        $formatter->_raw_output(
+            $html->span(
+                { class => 'fail' },
+                [ $result->raw, ' (', [ \'a', { href => $link }, 'go' ], ')' ]
+            ),
+            $html->br,
+            "\n"
+        );
     }
 }
 
@@ -95,11 +86,11 @@ sub _flush_queue {
 sub result {
     my ( $self, $result ) = @_;
     # When we get the next test process the previous one
-    $self->_flush_queue if $result->is_test;
-    push @{ $self->{queue} }, $result;
+    $self->_flush_queue if $result->is_test && $self->{queue};
+    push @{ $self->{queue} ||= [] }, $result;
 }
 
-=head3 C<close_test>
+=head2 C<close_test>
 
 Called to close a test session.
 
