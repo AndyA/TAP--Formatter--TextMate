@@ -88,14 +88,13 @@ sub _flush_item {
     # Get the result...
     my $result = shift @$queue;
 
-    my %def = ( file => $self->{test}, );
-    if ( @$queue && $queue->[0]->is_yaml ) {
-        my $yaml = shift @$queue;
-        my $data = $yaml->data;
-        %def = ( %def, %$data ) if 'HASH' eq ref $data;
-    }
-
     if ( $result->is_test && !$result->is_ok ) {
+        my %def = ( file => $self->{test}, );
+        if ( @$queue && $queue->[0]->is_yaml ) {
+            my $yaml = shift @$queue;
+            my $data = $yaml->data;
+            %def = ( %def, %$data ) if 'HASH' eq ref $data;
+        }
         my $class = $result->is_ok ? 'pass' : 'fail';
         my @out = ( $result->raw );
         unless ( $result->is_ok ) {
@@ -110,7 +109,8 @@ sub _flush_item {
 sub result {
     my ( $self, $result ) = @_;
     my $queue = $self->{queue};
-    push @$queue, $result unless $result->is_comment;
+    push @$queue, $result
+      unless $result->is_comment || $result->is_unknown;
     $self->_flush_item if @$queue > 1;
 }
 
