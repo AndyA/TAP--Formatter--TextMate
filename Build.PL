@@ -19,9 +19,10 @@ my $builder = $build_class->new(
     dist_author       => 'Andy Armstrong <andy@hexten.net>',
     dist_version_from => 'lib/TAP/Formatter/TextMate.pm',
     requires          => {
-        'Test::More'    => 0,
-        'Test::Harness' => '2.99',
-        'HTML::Tiny'    => 0,
+        'Test::More'             => 0,
+        'Test::Harness'          => '2.99',
+        'Test::More::Diagnostic' => 0,
+        'HTML::Tiny'             => 0,
     },
     add_to_cleanup => ['TAP-Formatter-TextMate-*'],
 );
