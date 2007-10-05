@@ -6,6 +6,7 @@ use HTML::Tiny;
 use URI::file;
 
 our $VERSION = '0.1';
+use base 'TAP::Formatter::Console::Session';
 
 =head1 NAME
 
@@ -33,18 +34,13 @@ This provides output formatting for TAP::Harness.
 
 =head3 C<new>
 
-Make a new TAP::Formatter::TextMate::Session.
-
 =cut
 
 sub new {
-    my ( $class, $test, $parser ) = @_;
-    return bless {
-        test   => $test,
-        parser => $parser,
-        queue  => [],
-        html   => HTML::Tiny->new
-    }, $class;
+    my $class = shift;
+    my $self  = $class->SUPER::new( @_ );
+    $self->{queue} = [];
+    return $self;
 }
 
 =head3 C<header>
@@ -55,9 +51,10 @@ Output test preamble
 
 sub header {
     my $self = shift;
-    my $html = $self->{html};
-    print $html->open( 'div', { class => 'test' } ), "\n",
-      $html->h1( $self->{test} ), "\n";
+    my $html = $self->_html;
+    # print $html->open( 'div', { class => 'test' } ), "\n",
+    #   $html->h1( $self->name ), "\n";
+    $self->SUPER::header;
 
 }
 
@@ -72,7 +69,7 @@ sub _link_to_location {
     my ( $self, $file, $line ) = @_;
 
     return 'txmt://open?'
-      . $self->{html}->query_encode(
+      . $self->_html->query_encode(
         {
             url => URI::file->new_abs( $file ),
             defined $line ? ( line => $line ) : ()
@@ -81,12 +78,15 @@ sub _link_to_location {
 }
 
 sub _flush_item {
-    my $self  = shift;
-    my $queue = $self->{queue};
-    my $html  = $self->{html};
+    my $self      = shift;
+    my $queue     = $self->{queue};
+    my $html      = $self->_html;
+    my $formatter = $self->formatter;
 
     # Get the result...
     my $result = shift @$queue;
+
+    $self->SUPER::result( $result );
 
     if ( $result->is_test && !$result->is_ok ) {
         my %def = ( file => $self->{test}, );
@@ -95,13 +95,11 @@ sub _flush_item {
             my $data = $yaml->data;
             %def = ( %def, %$data ) if 'HASH' eq ref $data;
         }
-        my $class = $result->is_ok ? 'pass' : 'fail';
-        my @out = ( $result->raw );
-        unless ( $result->is_ok ) {
-            my $link = $self->_link_to_location( $def{file}, $def{line} );
-            push @out, ' (', [ \'a', { href => $link }, 'go' ], ')';
-        }
-        print $html->span( { class => $class }, \@out ), $html->br, "\n";
+        my $link = $self->_link_to_location( $def{file}, $def{line} );
+        $formatter->_newline;
+        print $html->span( { class => 'fail' },
+            [ $result->raw, ' (', [ \'a', { href => $link }, 'go' ], ')' ] ),
+          $html->br, "\n";
     }
 
 }
@@ -121,30 +119,17 @@ Called to close a test session.
 =cut
 
 sub close_test {
-    my $self   = shift;
-    my $html   = $self->{html};
-    my $parser = $self->{parser};
-    my $queue  = $self->{queue};
+    my $self  = shift;
+    my $queue = $self->{queue};
     $self->_flush_item while @$queue;
-
-    my ( $status, $class )
-      = $parser->has_problems
-      ? ( 'FAIL', 'summary-fail' )
-      : ( 'PASS', 'summary-pass' );
-
-    print $html->div(
-        { class => $class },
-        [
-            "$status: ",
-            $parser->tests_run,
-            ' tests run, ',
-            scalar $parser->passed,
-            ' passed, ',
-            scalar $parser->failed,
-            ' failed'
-        ]
-      ),
-      $html->close( 'div' ), "\n";
+    $self->SUPER::close_test;
 }
+
+sub _html {
+    my $self = shift;
+    return $self->{_html} ||= HTML::Tiny->new;
+}
+
+sub _should_show_count { 0 }
 
 1;

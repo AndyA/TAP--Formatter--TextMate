@@ -6,6 +6,7 @@ use Carp;
 use TAP::Formatter::TextMate::Session;
 
 our $VERSION = '0.1';
+use base 'TAP::Formatter::Console';
 
 =head1 NAME
 
@@ -40,8 +41,9 @@ Create a new C<< TAP::Formatter::TextMate >>.
 =cut
 
 sub new {
-    my ( $class ) = @_;
-    return bless { html => HTML::Tiny->new }, $class;
+    my $class = shift;
+    my $self  = $class->SUPER::new( @_ );
+    return $self;
 }
 
 =head2 C<prepare>
@@ -52,10 +54,14 @@ Called by Test::Harness before any test output is generated.
 
 sub prepare {
     my ( $self, @tests ) = @_;
-    my $html = $self->{html};
+
+    my $html = $self->_html;
+
     print $html->open( 'html' ),
       $html->head( [ \'style', $self->_stylesheet ] ), $html->open( 'body' ),
       "\n";
+
+    $self->SUPER::prepare( @tests );
 }
 
 =head3 C<open_test>
@@ -67,7 +73,14 @@ Called to create a new test session.
 sub open_test {
     my ( $self, $test, $parser ) = @_;
 
-    my $session = TAP::Formatter::TextMate::Session->new( $test, $parser );
+    my $session = TAP::Formatter::TextMate::Session->new(
+        {
+            name      => $test,
+            formatter => $self,
+            parser    => $parser
+        }
+    );
+
     $session->header;
 
     return $session;
@@ -84,39 +97,75 @@ an aggregate.
 
 sub summary {
     my ( $self, $aggregate ) = @_;
-    my $html = $self->{html};
+    my $html = $self->_html;
+    $self->SUPER::summary( $aggregate );
     print $html->close( 'body' ), $html->close( 'html' ), "\n";
+}
+
+sub _html {
+    my $self = shift;
+    return $self->{_html} ||= HTML::Tiny->new;
+}
+
+sub _set_colors {
+    my $self = shift;
+    # red white on_blue reset
+    for my $col ( @_ ) {
+        if ( $col =~ /on_(\w+)/ ) {
+            $self->{_bg} = $1;
+        }
+        elsif ( $col eq 'reset' ) {
+            $self->{_fg} = $self->{_bg} = undef;
+        }
+        else {
+            $self->{_fg} = $col;
+        }
+    }
+}
+
+sub _newline {
+    my $self = shift;
+    $self->_output( "\n" ) if $self->{_nl};
+}
+
+sub _output {
+    my $self = shift;
+    my $out  = join( '', @_ );
+    my $html = $self->_html;
+    my $br   = $html->br;
+    my $hr   = $html->hr;
+    $self->{_nl} = substr( $out, -1 ) ne "\n";
+    $out =~ s/\r//g;
+    if ( $out =~ /^[\s-]+$/ ) {
+        $out =~ s/-{5,}\s*/$hr/g;
+    }
+    else {
+        $out = $html->entity_encode( $out );
+    }
+    $out =~ s/\n/$br\n/g;
+    my ( $bg, $fg ) = ( $self->{_bg}, $self->{_fg} );
+
+    if ( $bg || $fg ) {
+        my @style = ();
+        push @style, 'color: ' . $fg            if $fg;
+        push @style, 'background-color: ' . $bg if $bg;
+        $out = $html->span( { style => join( ';', @style ) }, $out );
+    }
+    print $out;
 }
 
 sub _stylesheet {
     return <<CSS;
 
-h1 {
-    margin: 0px;
-    padding: 0px;
-    padding-bottom: 4px;
-    font-size: 1.1em;
-}
-
-.test {
-    border: 1px dotted gray;
-    margin: 2px;
-    padding: 4px;
-}
-
-.pass {
+body, html {
+    color: green;
+    background-color: black;
+    font-family: monospace;
 }
 
 .fail {
     color: red;
-}
-
-.summary-pass, .summary-fail {
-    font-weight: bold;
-}
-
-.summary-fail {
-    color: red;
+    background: #222;
 }
 
 CSS
