@@ -34,18 +34,6 @@ Generates TextMate compatible HTML test output.
 
 =head1 INTERFACE 
 
-=head2 C<< new >>
-
-Create a new C<< TAP::Formatter::TextMate >>.
-
-=cut
-
-sub new {
-    my $class = shift;
-    my $self  = $class->SUPER::new( @_ );
-    return $self;
-}
-
 =head2 C<prepare>
 
 Called by Test::Harness before any test output is generated. 
