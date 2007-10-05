@@ -14,8 +14,10 @@ WriteMakefile(
     ABSTRACT_FROM => 'lib/TAP/Formatter/TextMate.pm',
     PL_FILES      => {},
     PREREQ_PM     => {
-        'Test::More' => 0,
-        'version'    => 0,
+        'Test::More'             => 0,
+        'Test::Harness'          => '2.99',
+        'Test::More::Diagnostic' => 0,
+        'HTML::Tiny'             => 0,
     },
     dist  => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean => { FILES    => 'TAP-Formatter-TextMate-*' },
